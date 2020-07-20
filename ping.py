@@ -1,3 +1,5 @@
+from ping3 import ping, verbose_ping
+
 import sys
 import platform
 import base64
@@ -17,7 +19,7 @@ def main():
     }
     browser = cef.CreateBrowserSync(url='file:///web/index.html',
                                     settings=browser_settings,
-                                    window_title='Hello World!')
+                                    window_title='Pinger V0.1')
     if platform.system() == "Windows":
         window_handle = browser.GetOuterWindowHandle()
         insert_after_handle = 0
@@ -25,7 +27,7 @@ def main():
         SWP_NOMOVE = 0x0002
         # noinspection PyUnresolvedReferences
         ctypes.windll.user32.SetWindowPos(window_handle, insert_after_handle,
-                                          0, 0, 700, 200, SWP_NOMOVE)
+                                          0, 0, 700, 500, SWP_NOMOVE)
     set_javascript_bindings(browser)
     cef.MessageLoop()
     cef.Shutdown()
@@ -36,23 +38,21 @@ class External():
     def __init__(self, browser):
         self.browser = browser
 
-    def ask_dir_path(self):
-        from tkinter.filedialog import askdirectory
-        from tkinter import Tk 
-        Tk().withdraw()
-        self.target_dir_path = askdirectory()
-        self.browser.ExecuteFunction('updatePath', self.target_dir_path)
-
-
-def py_confirm(path):
-    print('success: ' + path)
-
+    def ask_ping(self, arr):
+        # Ping Check
+        res = []
+        for i, a in enumerate(arr):
+            r = ping(a, timeout=1)  # IP Or Domain
+            if r is None:
+                r = 0
+            print(a, r)
+            res.append(a)
+            self.browser.ExecuteFunction('updateRes', i, a, r)
 
 def set_javascript_bindings(browser):
     external = External(browser)
     bindings = cef.JavascriptBindings(
             bindToFrames=False, bindToPopups=False)
-    bindings.SetFunction('py_confirm', py_confirm)
     bindings.SetObject('external', external)
     browser.SetJavascriptBindings(bindings)
 
